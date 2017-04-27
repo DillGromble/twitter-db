@@ -64,34 +64,28 @@ module.exports = function makeRouterWithSockets (io) {
   // create a new tweet
   router.post('/tweets', function(req, res, next){
     const checkUser = 'SELECT id FROM users WHERE name=$1',
-          addUser = 'INSERT INTO users VALUES ($1, $2)',
+          addUser = 'INSERT INTO users(name, picture_url) VALUES ($1, $2) RETURNING id',
           addTweet = 'INSERT INTO tweets(user_id, content) VALUES($1, $2)';
 
     client.query(checkUser, [req.body.name], function (err, result) {
       if (err) return next(err);
       if (result.rows[0]) {
-        client.query(addTweet, [result.rows[0].id, req.body.content], function (err, result) {
+        client.query(addTweet, [result.rows[0].id, req.body.content], function (err) {
           if (err) return next(err);
           res.redirect('/');
         });
       }
       else {
-        client.query(addUser, [result.rows[0].id, req.body.content], function (err, result) {
-          if (err) return next(err);
-          res.redirect('/');
+        client.query(addUser, [req.body.name, 'http://i.imgur.com/XDjBjfu.jpg'], function (err, result) {
+          if (err) return next(err)
+          let newID = result.rows[0].id;
+          client.query(addTweet, [newID, req.body.content], function (err) {
+            if (err) return next(err);
+            res.redirect('/');
+          });
         });
       }
-
     });
-
-
-
-
-
-
-    // var newTweet = tweetBank.add(req.body.name, req.body.content);
-    // io.sockets.emit('new_tweet', newTweet);
-    // res.redirect('/');
   });
 
   // // replaced this hard-coded route with general static routing in app.js
