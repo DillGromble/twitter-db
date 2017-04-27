@@ -24,12 +24,12 @@ module.exports = function makeRouterWithSockets (io) {
 
   // single-user page
   router.get('/users/:username', function(req, res, next){
-    client.query('SELECT name, content \
+    const query = 'SELECT name, content \
                   FROM users JOIN tweets ON tweets.user_id = users.id \
-                  WHERE name=$1', [req.params.username], function (err, result){
+                  WHERE name=$1'
+    client.query(query, [req.params.username], function (err, result){
       if (err) return next(err);
       var usersTweets = result.rows;
-
       res.render('index', {
         title: 'Twitter.js',
         tweets: usersTweets,
@@ -37,7 +37,6 @@ module.exports = function makeRouterWithSockets (io) {
         username: req.params.username
       });
     });
-
   });
 
   // single-tweet page
